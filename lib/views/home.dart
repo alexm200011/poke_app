@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:poke_app/models/pokemon.dart';
 
 void main() => runApp(const HomeScreen());
 
@@ -13,105 +14,92 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<dynamic> pokemons = [];
-  List<dynamic> types = [];
-  List<String> allTypes = [];
+  List<Pokemon> pokemons = [];
 
   String lorem =
       'Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor';
   @override
   void initState() {
-    fetchPokemons();
     super.initState();
+    fetchPokemons();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pokémon'),
+        backgroundColor: Colors.white,
+        title: const Text('Pokémon', style: TextStyle(color: Colors.black)),
         centerTitle: true,
         leading: IconButton(
           icon: Image.network(
-              'https://cdn.icon-icons.com/icons2/896/PNG/512/pokemon_go_play_game_cinema_film_movie_icon-icons.com_69163.png'),
+              'https://cdn-icons-png.flaticon.com/512/188/188987.png'),
           onPressed: () {},
         ),
       ),
-      body: ListView.builder(
-        itemCount: pokemons.length,
-        itemBuilder: (context, index) {
-          final pokemon = pokemons[index];
-          final name = pokemon['name'];
-          final url = pokemon['url'];
-          return Card(
-            child: ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Image.network(
-                      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${index + 1}.png'),
+      body: Padding(
+        padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.05,
+            vertical: MediaQuery.of(context).size.width * 0.05),
+        child: ListView.builder(
+          itemCount: pokemons.length,
+          itemBuilder: (context, index) {
+            final pokemon = pokemons[index];
+            final name = pokemon.name.toString();
+            return Column(
+              children: [
+                Card(
+                  child: ListTile(
+                    leading: Container(
+                      width: 60,
+                      height: 60,
+                      alignment: Alignment.center,
+                      child: Image.network(
+                        fit: BoxFit.cover,
+                        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${index + 1}.png',
+                      ),
+                    ),
+                    title: Text(name),
+                    subtitle: Text(
+                      lorem,
+                      maxLines: 3,
+                    ),
+                    trailing: Container(
+                      height: 40,
+                      width: 40,
+                      alignment: Alignment.center,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.green,
+                        child: Image.network(
+                            'https://cdn.icon-icons.com/icons2/896/PNG/512/pokemon_go_play_game_cinema_film_movie_icon-icons.com_69163.png'),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              title: Text(name),
-              subtitle: Text(
-                lorem,
-                maxLines: 3,
-              ),
-              trailing: Container(
-                height: 40,
-                width: 40,
-                alignment: Alignment.center,
-                child: const CircleAvatar(
-                  backgroundColor: Colors.green,
-                  //backgroundColor: getColor(allTypes[index]),
-                ),
-              ),
-            ),
-          );
-        },
+                const SizedBox(
+                  height: 10.0,
+                )
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
   //Funcion para consultar la lista de pokemones
-  void fetchPokemons() async {
-    print('Llamando a la api de pokemons');
-    const url = 'https://pokeapi.co/api/v2/pokemon/';
-    final uri = Uri.parse(url);
-    final response = await http.get(uri);
-    final body = response.body;
-    final json = jsonDecode(body);
-    setState(() {
-      pokemons = json['results'];
-    });
-    print('Llamado a la api de pokemons completado');
-    //pokemonDetails(pokemons);
-  }
-
-// Funcion para consultar el detalle de cada pokemon de la lista
-  void pokemonDetails(List<dynamic> pokemons) async {
-    for (var p in pokemons) {
-      fetchPokemonsType(p['url']);
-    }
-    //print('Imprimiendo los tipos');
-    ///print(allTypes);
-  }
-
-  //Funcion para consultar el typo de pokemon
-  void fetchPokemonsType(String url) async {
-    final uri = Uri.parse(url);
-    final response = await http.get(uri);
-    final body = response.body;
-    final json = jsonDecode(body);
-    setState(() {
-      types = json['types'];
-    });
-    for (var t in types) {
-      allTypes.add(t['type']['name'].toString());
-      break;
+  Future<void> fetchPokemons() async {
+    final response =
+        await http.get(Uri.parse('https://pokeapi.co/api/v2/pokemon'));
+    if (response.statusCode == 200) {
+      final List<dynamic> pokemonListJson =
+          jsonDecode(response.body)['results'];
+      setState(() {
+        pokemons =
+            pokemonListJson.map((json) => Pokemon.fromJson(json)).toList();
+      });
+    } else {
+      throw Exception('Failed to load pokemon list');
     }
   }
 
