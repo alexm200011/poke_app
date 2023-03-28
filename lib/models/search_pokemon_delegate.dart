@@ -1,58 +1,55 @@
-import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:poke_app/models/pokemon.dart';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:poke_app/models/pokemon.dart';
-import 'package:poke_app/models/search_pokemon_delegate.dart';
-import 'package:poke_app/views/detail.dart';
 
-void main() => runApp(const HomeScreen());
+import '../views/detail.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  List<Pokemon> pokemons = [];
-
+class SearchPokemonDelegate extends SearchDelegate<Pokemon>{
+  
+  final List<Pokemon> pokemons;
+  List<Pokemon> filter = [];
   String lorem =
       'Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor';
+
+  SearchPokemonDelegate(this.pokemons);
+
   @override
-  void initState() {
-    super.initState();
-    fetchPokemons();
+  List<Widget>? buildActions(BuildContext context) {
+    return [IconButton(
+      onPressed: (){
+        query = '';
+      }, 
+      icon: const Icon(Icons.close))];
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Pokémon', style: TextStyle(color: Colors.black)),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Image.network(
-              'https://cdn-icons-png.flaticon.com/512/188/188987.png'),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(onPressed: (){
-            showSearch(context: context, delegate: SearchPokemonDelegate(pokemons));
-          }, 
-          icon: const Icon(Icons.search,color: Colors.black),)
-        ],
-      ),
-      body: Padding(
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      onPressed: (){
+        close(context, Pokemon(name: '', url: ''));
+      }, 
+      icon: const Icon(Icons.arrow_back));
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return Center();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    filter = pokemons.where((pokemon){
+      return pokemon.name!.toLowerCase().contains(query.trim().toLowerCase());
+    }).toList();
+    return Padding(
         padding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.05,
             vertical: MediaQuery.of(context).size.width * 0.05),
         child: ListView.builder(
-          itemCount: pokemons.length,
+          itemCount: filter.length,
           itemBuilder: (context, index) {
-            final pokemon = pokemons[index];
+            final pokemon = filter[index];
             final name = pokemon.name.toString();
             return Column(
               children: [
@@ -97,24 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-      ),
-    );
+      );
   }
-
-  //Funcion para consultar la lista de pokemones
-  Future<void> fetchPokemons() async {
-    final response =
-        await http.get(Uri.parse('https://pokeapi.co/api/v2/pokemon'));
-    if (response.statusCode == 200) {
-      final List<dynamic> pokemonListJson =
-          jsonDecode(response.body)['results'];
-      setState(() {
-        pokemons =
-            pokemonListJson.map((json) => Pokemon.fromJson(json)).toList();
-      });
-    } else {
-      throw Exception('Failed to load pokemon list');
-    }
-  }
-
 }
