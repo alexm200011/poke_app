@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:poke_app/models/pokemon.dart';
+import 'package:poke_app/views/detail.dart';
 
 void main() => runApp(const HomeScreen());
 
@@ -68,10 +69,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 40,
                       width: 40,
                       alignment: Alignment.center,
-                      child: CircleAvatar(
-                        backgroundColor: Colors.green,
-                        child: Image.network(
-                            'https://cdn.icon-icons.com/icons2/896/PNG/512/pokemon_go_play_game_cinema_film_movie_icon-icons.com_69163.png'),
+                      child: GestureDetector(
+                        onTap: (){
+                          showDialog(context: context, barrierDismissible: false,builder: ((context){
+                            return DetailScreen(url: pokemon.url.toString());
+                          }));
+                        },
+                        child: CircleAvatar(
+                          child: Image.network(
+                              'https://cdn.icon-icons.com/icons2/896/PNG/512/pokemon_go_play_game_cinema_film_movie_icon-icons.com_69163.png'),
+                        ),
                       ),
                     ),
                   ),
@@ -103,16 +110,4 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Funcion para definir el color del pokemon
-  Color getColor(String tipo) {
-    if (tipo == 'water') {
-      return Colors.blue;
-    } else if (tipo == 'grass') {
-      return Colors.green;
-    } else if (tipo == 'fire') {
-      return Colors.red;
-    } else {
-      return Colors.brown;
-    }
-  }
 }
